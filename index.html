@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Kargas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo-mark">K</div>
+      <div class="header-text">
+        <span class="header-welcome">Bem vindo ao</span>
+        <span class="header-title">Kargas</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- TAB NAV -->
+  <nav class="tab-nav" id="tabNav">
+    <div class="tab-scroll">
+      <button class="tab-btn active" data-cat="Costas">Costas</button>
+      <button class="tab-btn" data-cat="Peito">Peito</button>
+      <button class="tab-btn" data-cat="Triceps">Tríceps</button>
+      <button class="tab-btn" data-cat="Biceps">Bíceps</button>
+      <button class="tab-btn" data-cat="Ombro">Ombro</button>
+      <button class="tab-btn" data-cat="Perna">Perna</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main-content" id="mainContent">
+    <button class="btn-add" id="btnAdd">
+      <span class="btn-add-icon">+</span>
+      <span>Adicionar Exercício</span>
+    </button>
+
+    <div class="exercise-list" id="exerciseList">
+      <!-- Cards injetados via JS -->
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🏋️</div>
+      <p class="empty-title">Nenhum exercício ainda</p>
+      <p class="empty-sub">Toque em "+ Adicionar Exercício" para começar.</p>
+    </div>
+  </main>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Adicionar exercício">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Novo Exercício</h2>
+        <button class="modal-close" id="modalClose" aria-label="Fechar">✕</button>
+      </div>
+      <p class="modal-sub" id="modalSub">Categoria: <strong id="modalCatLabel">—</strong></p>
+      <input
+        class="modal-input"
+        id="modalInput"
+        type="text"
+        placeholder="Ex: Remada Baixa, Supino Reto…"
+        maxlength="60"
+        autocomplete="off"
+      />
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modalCancel">Cancelar</button>
+        <button class="btn-primary" id="modalConfirm">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
