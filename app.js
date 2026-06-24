@@ -13,6 +13,9 @@ let state = {
   exercises: {},   // { id: { name, category, logs: [], collapsed: bool } }
 };
 
+// Timer runtime
+let timerInterval = null;
+let timerRemaining = 0; // seconds
 // ── STORAGE ──────────────────────────────────────────────────
 function loadState() {
   try {
@@ -68,6 +71,34 @@ function lastLogDate(ex) {
     const d = log.date || '';
     return d > best ? d : best;
   }, '');
+}
+
+function lastLog(ex) {
+  if (!ex.logs || ex.logs.length === 0) return null;
+  return ex.logs.reduce((best, log) => {
+    if (!best) return log;
+    // prefer later date, then later ts
+    if ((log.date || '') > (best.date || '')) return log;
+    if ((log.date || '') === (best.date || '')) return (log.ts || 0) > (best.ts || 0) ? log : best;
+    return best;
+  }, null);
+}
+
+function personalRecord(ex) {
+  if (!ex.logs || ex.logs.length === 0) return null;
+  // choose log with highest weight, fallback to highest (weight * reps)
+  return ex.logs.reduce((best, log) => {
+    if (!best) return log;
+    const w1 = best.weight || 0;
+    const w2 = log.weight || 0;
+    if (w2 > w1) return log;
+    if (w2 === w1) {
+      const s1 = (best.reps || 0) * (best.weight || 0);
+      const s2 = (log.reps || 0) * (log.weight || 0);
+      return s2 > s1 ? log : best;
+    }
+    return best;
+  }, null);
 }
 
 // ── SORT: by last log date desc, then by name asc ─────────────
@@ -134,6 +165,16 @@ function buildCard(ex) {
     </div>
   `;
 
+  // add PR badge next to title if present
+  const pr = personalRecord(ex);
+  if (pr) {
+    const titleWrap = header.querySelector('.card-title-wrap');
+    const prEl = document.createElement('span');
+    prEl.className = 'card-pr';
+    prEl.textContent = `${pr.weight || '—'}kg x ${pr.reps || '—'}`;
+    titleWrap.querySelector('.card-title').after(prEl);
+  }
+
   // ── Collapsible body
   const body = document.createElement('div');
   body.className = 'card-body';
@@ -189,11 +230,19 @@ function buildLogForm(ex) {
       </div>
       <div class="form-group">
         <label for="reps-${ex.id}">Repetições</label>
-        <input type="number" id="reps-${ex.id}" name="reps" placeholder="12" min="1" max="999" inputmode="numeric" />
+        <div class="input-stepper">
+          <button type="button" class="step" data-action="decr" data-target="reps-${ex.id}">−</button>
+          <input type="number" id="reps-${ex.id}" name="reps" placeholder="12" min="1" max="999" inputmode="numeric" />
+          <button type="button" class="step" data-action="incr" data-target="reps-${ex.id}">+</button>
+        </div>
       </div>
       <div class="form-group">
         <label for="weight-${ex.id}">Peso (kg)</label>
-        <input type="number" id="weight-${ex.id}" name="weight" placeholder="40" min="0" step="0.5" inputmode="decimal" />
+        <div class="input-stepper">
+          <button type="button" class="step" data-action="decr" data-target="weight-${ex.id}" data-step="2">−</button>
+          <input type="number" id="weight-${ex.id}" name="weight" placeholder="40" min="0" step="0.5" inputmode="decimal" />
+          <button type="button" class="step" data-action="incr" data-target="weight-${ex.id}" data-step="2">+</button>
+        </div>
       </div>
     </div>
     <div class="form-row" style="align-items:flex-end">
@@ -231,6 +280,13 @@ function buildLogForm(ex) {
   saveBtn.textContent = 'Salvar Carga';
   saveBtn.addEventListener('click', () => saveLog(ex.id, wrap));
   wrap.appendChild(saveBtn);
+
+  const repeatBtn = document.createElement('button');
+  repeatBtn.className = 'btn-repeat-last';
+  repeatBtn.type = 'button';
+  repeatBtn.textContent = 'Repetir última';
+  repeatBtn.addEventListener('click', () => repeatLast(ex.id, wrap));
+  wrap.appendChild(repeatBtn);
 
   return wrap;
 }
@@ -382,6 +438,17 @@ function deleteLog(exId, logId) {
     const oldHist = card.querySelector('.history-section');
     const newHist  = buildHistory(ex);
     oldHist.parentNode.replaceChild(newHist, oldHist);
+    // Update PR badge
+    const prEl = card.querySelector('.card-pr');
+    const newPr = personalRecord(ex);
+    if (prEl) {
+      if (newPr) prEl.textContent = `${newPr.weight || '—'}kg x ${newPr.reps || '—'}`;
+      else prEl.remove();
+    } else if (newPr) {
+      const title = card.querySelector('.card-title');
+      const el = document.createElement('span'); el.className = 'card-pr'; el.textContent = `${newPr.weight || '—'}kg x ${newPr.reps || '—'}`;
+      if (title) title.after(el);
+    }
   }
 
   showToast('Registro excluído.');
@@ -436,6 +503,17 @@ function saveLog(exId, formEl) {
     const oldHist = card.querySelector('.history-section');
     const newHist  = buildHistory(ex);
     oldHist.parentNode.replaceChild(newHist, oldHist);
+    // Update PR badge after save
+    const prEl = card.querySelector('.card-pr');
+    const newPr = personalRecord(ex);
+    if (prEl) {
+      if (newPr) prEl.textContent = `${newPr.weight || '—'}kg x ${newPr.reps || '—'}`;
+      else prEl.remove();
+    } else if (newPr) {
+      const title = card.querySelector('.card-title');
+      const el = document.createElement('span'); el.className = 'card-pr'; el.textContent = `${newPr.weight || '—'}kg x ${newPr.reps || '—'}`;
+      if (title) title.after(el);
+    }
   }
 
   // Re-sort list to reflect new last-log order
@@ -496,6 +574,162 @@ overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(
 modalInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') confirmModal();
   if (e.key === 'Escape') closeModal();
+});
+
+// --- Additional features: repeat last, export, timer, steppers ---
+
+// Fill form with last log values
+function repeatLast(exId, formEl) {
+  const ex = state.exercises[exId];
+  if (!ex) return;
+  const last = lastLog(ex);
+  if (!last) {
+    showToast('Nenhum registro anterior.');
+    return;
+  }
+
+  const dateEl = formEl.querySelector(`#date-${exId}`);
+  const repsEl = formEl.querySelector(`#reps-${exId}`);
+  const weightEl = formEl.querySelector(`#weight-${exId}`);
+  const diffEl = formEl.querySelector(`#diff-${exId}`);
+  const personalEl = formEl.querySelector(`#personal-${exId}`);
+  const obsEl = formEl.querySelector(`#obs-${exId}`);
+
+  if (dateEl) dateEl.value = last.date || todayISO();
+  if (repsEl) repsEl.value = last.reps || '';
+  if (weightEl) weightEl.value = last.weight != null ? last.weight : '';
+  if (diffEl) { diffEl.value = last.difficulty || 'medium'; diffEl.className = `diff-${diffEl.value}`; }
+  if (personalEl) personalEl.checked = !!last.personal;
+  if (obsEl) obsEl.value = last.obs || '';
+
+  showToast('Campos preenchidos com último registro.');
+}
+
+// Export data (copy to clipboard or prompt)
+function exportData() {
+  try {
+    const lines = [];
+    lines.push(`Kargas Backup — ${new Date().toLocaleString()}`);
+    lines.push('');
+
+    const exercises = Object.values(state.exercises);
+    if (exercises.length === 0) {
+      lines.push('Nenhum exercício encontrado.');
+    } else {
+      exercises.forEach(ex => {
+        lines.push(`${ex.name} (${ex.category}) — ${ex.logs.length} registros`);
+        const pr = personalRecord(ex);
+        if (pr) lines.push(`PR: ${pr.weight || '—'}kg x ${pr.reps || '—'}`);
+        if (ex.logs.length > 0) {
+          const sorted = [...ex.logs].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.ts - a.ts);
+          sorted.forEach(log => {
+            const parts = [];
+            parts.push(formatDate(log.date));
+            if (log.weight != null && log.weight !== '') parts.push(`${log.weight}kg`);
+            if (log.reps) parts.push(`${log.reps} reps`);
+            if (log.difficulty) parts.push(difficultyLabel(log.difficulty));
+            if (log.personal) parts.push('Personal');
+            let line = ` - ${parts.join(' • ')}`;
+            if (log.obs) line += ` — ${log.obs}`;
+            lines.push(line);
+          });
+        }
+        lines.push('');
+      });
+    }
+
+    const txt = lines.join('\n');
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const filename = `kargas-backup-${new Date().toISOString().slice(0,10)}.txt`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Backup gerado e baixado.');
+  } catch (e) {
+    console.warn(e);
+    showToast('Falha ao exportar dados.');
+  }
+}
+
+// Timer helpers
+function toggleTimerPanel(show) {
+  const panel = document.getElementById('timerPanel');
+  if (!panel) return;
+  panel.setAttribute('aria-hidden', String(!show));
+}
+
+function startTimer(minutes) {
+  stopTimer();
+  timerRemaining = (minutes || 1) * 60;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerRemaining -= 1;
+    if (timerRemaining <= 0) { stopTimer(); showToast('Tempo!'); return; }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerRemaining = 0;
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+  const d = document.getElementById('timerDisplay');
+  if (!d) return;
+  const mm = String(Math.floor(timerRemaining / 60)).padStart(2, '0');
+  const ss = String(timerRemaining % 60).padStart(2, '0');
+  d.textContent = `${mm}:${ss}`;
+}
+
+// Stepper handling (increment/decrement inputs)
+function handleStepperClick(e) {
+  const btn = e.target.closest('.step');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const targetId = btn.dataset.target;
+  const step = parseFloat(btn.dataset.step || '1');
+  const input = document.getElementById(targetId);
+  if (!input) return;
+  let val = input.value === '' ? 0 : parseFloat(input.value);
+  if (action === 'incr') val += step; else val -= step;
+  if (input.type === 'number') {
+    if (input.min) val = Math.max(val, parseFloat(input.min));
+    if (input.max) val = Math.min(val, parseFloat(input.max));
+  }
+  // Ensure integer for reps
+  if (targetId.startsWith('reps-')) val = Math.max(1, Math.round(val));
+  input.value = val;
+}
+
+// Export button
+const exportBtn = document.getElementById('exportBtn');
+if (exportBtn) exportBtn.addEventListener('click', exportData);
+
+// Timer FAB
+const timerFab = document.getElementById('timerFab');
+if (timerFab) timerFab.addEventListener('click', () => toggleTimerPanel(true));
+const timerPanel = document.getElementById('timerPanel');
+if (timerPanel) {
+  timerPanel.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-min]');
+    if (b) { startTimer(parseInt(b.dataset.min, 10)); }
+  });
+  const startBtn = document.getElementById('timerStart');
+  const stopBtn = document.getElementById('timerStop');
+  if (startBtn) startBtn.addEventListener('click', () => { if (timerRemaining <= 0) startTimer(1); });
+  if (stopBtn) stopBtn.addEventListener('click', () => stopTimer());
+}
+
+// Global delegation for steppers
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.step')) handleStepperClick(e);
 });
 
 // ── TABS ─────────────────────────────────────────────────────

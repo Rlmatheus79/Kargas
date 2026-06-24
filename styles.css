@@ -67,6 +67,20 @@ body {
   padding: 0 20px;
 }
 
+.btn-export {
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-export:hover { border-color: var(--border-accent); color: var(--text-primary); }
+
 .logo-mark {
   width: 38px;
   height: 38px;
@@ -274,6 +288,13 @@ body {
   text-overflow: ellipsis;
 }
 
+.card-pr {
+  font-size: 0.72rem;
+  color: var(--accent-light);
+  font-weight: 700;
+  margin-left: 8px;
+}
+
 .card-last-log {
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -376,6 +397,73 @@ textarea {
   -webkit-appearance: none;
   appearance: none;
 }
+
+.input-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-stepper .step {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-repeat-last {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px dashed var(--border-accent);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.timer-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 86px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 30px var(--accent-glow);
+  font-size: 1.15rem;
+  cursor: pointer;
+  z-index: 500;
+}
+
+.timer-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 150px;
+  width: 170px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 500;
+}
+
+.timer-panel[aria-hidden="false"] { display: flex; }
+
+.timer-options { display: flex; gap: 6px; }
+.timer-options button { flex: 1; padding: 6px 8px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+.timer-display { text-align: center; font-weight: 800; color: var(--accent-light); }
+.timer-controls { display:flex; gap:6px; }
+.timer-controls button { flex:1; padding:6px; border-radius:8px; border: none; cursor:pointer; }
+
 
 input[type="date"]:focus,
 input[type="number"]:focus,

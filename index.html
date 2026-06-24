@@ -15,6 +15,7 @@
   <header class="app-header">
     <div class="header-inner">
       <div class="logo-mark">K</div>
+      <button id="exportBtn" class="btn-export" aria-label="Exportar dados">⤓ Exportar</button>
       <div class="header-text">
         <span class="header-welcome">Bem vindo ao</span>
         <span class="header-title">Kargas</span>
@@ -75,6 +76,20 @@
     </div>
   </div>
 
+  <!-- Cronômetro flutuante -->
+  <button id="timerFab" class="timer-fab" aria-label="Cronômetro">⏱</button>
+  <div id="timerPanel" class="timer-panel" aria-hidden="true">
+    <div class="timer-options">
+      <button data-min="1">1 min</button>
+      <button data-min="2">2 min</button>
+      <button data-min="3">3 min</button>
+    </div>
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="timer-controls">
+      <button id="timerStart">Iniciar</button>
+      <button id="timerStop">Parar</button>
+    </div>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>
