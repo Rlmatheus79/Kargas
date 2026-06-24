@@ -657,19 +657,58 @@ function exportData() {
 }
 
 // Timer helpers
-function toggleTimerPanel(show) {
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      // re-request on release
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) {
+    // ignore if not supported or denied
+    console.warn('WakeLock failed', e);
+  }
+}
+
+async function releaseWakeLock() {
+  try {
+    if (wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch (e) {
+    console.warn('WakeLock release failed', e);
+  }
+}
+
+function toggleTimerPanel(force) {
   const panel = document.getElementById('timerPanel');
   if (!panel) return;
-  panel.setAttribute('aria-hidden', String(!show));
+  if (typeof force === 'boolean') {
+    panel.setAttribute('aria-hidden', String(!force));
+    return;
+  }
+  const isHidden = panel.getAttribute('aria-hidden') === 'true';
+  panel.setAttribute('aria-hidden', String(!isHidden));
 }
 
 function startTimer(minutes) {
   stopTimer();
   timerRemaining = (minutes || 1) * 60;
   updateTimerDisplay();
+  // request wake lock to keep screen on
+  requestWakeLock();
   timerInterval = setInterval(() => {
     timerRemaining -= 1;
-    if (timerRemaining <= 0) { stopTimer(); showToast('Tempo!'); return; }
+    if (timerRemaining <= 0) {
+      // vibrate 3x if supported
+      try { if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]); } catch(e){}
+      stopTimer();
+      showToast('Tempo!');
+      return;
+    }
     updateTimerDisplay();
   }, 1000);
 }
@@ -678,6 +717,8 @@ function stopTimer() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   timerRemaining = 0;
   updateTimerDisplay();
+  // release wake lock
+  releaseWakeLock();
 }
 
 function updateTimerDisplay() {
@@ -687,6 +728,13 @@ function updateTimerDisplay() {
   const ss = String(timerRemaining % 60).padStart(2, '0');
   d.textContent = `${mm}:${ss}`;
 }
+
+// re-request wake lock when visibility changes (some browsers release it)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && timerInterval && !wakeLock) {
+    await requestWakeLock();
+  }
+});
 
 // Stepper handling (increment/decrement inputs)
 function handleStepperClick(e) {
@@ -714,7 +762,7 @@ if (exportBtn) exportBtn.addEventListener('click', exportData);
 
 // Timer FAB
 const timerFab = document.getElementById('timerFab');
-if (timerFab) timerFab.addEventListener('click', () => toggleTimerPanel(true));
+if (timerFab) timerFab.addEventListener('click', () => toggleTimerPanel());
 const timerPanel = document.getElementById('timerPanel');
 if (timerPanel) {
   timerPanel.addEventListener('click', (e) => {
@@ -730,6 +778,18 @@ if (timerPanel) {
 // Global delegation for steppers
 document.addEventListener('click', (e) => {
   if (e.target.closest('.step')) handleStepperClick(e);
+});
+
+// Close timer panel when clicking outside
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('timerPanel');
+  const fab = document.getElementById('timerFab');
+  if (!panel || !fab) return;
+  const open = panel.getAttribute('aria-hidden') === 'false';
+  if (!open) return;
+  if (!e.target.closest('#timerPanel') && !e.target.closest('#timerFab')) {
+    toggleTimerPanel(false);
+  }
 });
 
 // ── TABS ─────────────────────────────────────────────────────
