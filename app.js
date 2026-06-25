@@ -230,19 +230,11 @@ function buildLogForm(ex) {
       </div>
       <div class="form-group">
         <label for="reps-${ex.id}">Repetições</label>
-        <div class="input-stepper">
-          <button type="button" class="step" data-action="decr" data-target="reps-${ex.id}">−</button>
-          <input type="number" id="reps-${ex.id}" name="reps" placeholder="12" min="1" max="999" inputmode="numeric" />
-          <button type="button" class="step" data-action="incr" data-target="reps-${ex.id}">+</button>
-        </div>
+        <input type="number" id="reps-${ex.id}" name="reps" placeholder="12" min="1" max="999" inputmode="numeric" />
       </div>
       <div class="form-group">
         <label for="weight-${ex.id}">Peso (kg)</label>
-        <div class="input-stepper">
-          <button type="button" class="step" data-action="decr" data-target="weight-${ex.id}" data-step="2">−</button>
-          <input type="number" id="weight-${ex.id}" name="weight" placeholder="40" min="0" step="0.5" inputmode="decimal" />
-          <button type="button" class="step" data-action="incr" data-target="weight-${ex.id}" data-step="2">+</button>
-        </div>
+        <input type="number" id="weight-${ex.id}" name="weight" placeholder="40" min="0" step="0.5" inputmode="decimal" />
       </div>
     </div>
     <div class="form-row" style="align-items:flex-end">
@@ -254,7 +246,7 @@ function buildLogForm(ex) {
           <option value="hard">Difícil</option>
         </select>
       </div>
-      <div class="form-group" style="justify-content:flex-end;padding-bottom:9px">
+      <div class="form-group checkbox-group">
         <label class="checkbox-row">
           <input type="checkbox" id="personal-${ex.id}" name="personal" />
           <span>Ajuda do personal</span>
@@ -703,14 +695,25 @@ function startTimer(minutes) {
   timerInterval = setInterval(() => {
     timerRemaining -= 1;
     if (timerRemaining <= 0) {
-      // vibrate 3x if supported
-      try { if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]); } catch(e){}
+      triggerVibration();
       stopTimer();
       showToast('Tempo!');
       return;
     }
     updateTimerDisplay();
   }, 1000);
+}
+
+function triggerVibration() {
+  try {
+    if ('vibrate' in navigator && navigator.vibrate) {
+      navigator.vibrate(200);
+      setTimeout(() => navigator.vibrate(200), 300);
+      setTimeout(() => navigator.vibrate(200), 600);
+    }
+  } catch (e) {
+    console.warn('Vibration failed', e);
+  }
 }
 
 function stopTimer() {
@@ -736,26 +739,6 @@ document.addEventListener('visibilitychange', async () => {
   }
 });
 
-// Stepper handling (increment/decrement inputs)
-function handleStepperClick(e) {
-  const btn = e.target.closest('.step');
-  if (!btn) return;
-  const action = btn.dataset.action;
-  const targetId = btn.dataset.target;
-  const step = parseFloat(btn.dataset.step || '1');
-  const input = document.getElementById(targetId);
-  if (!input) return;
-  let val = input.value === '' ? 0 : parseFloat(input.value);
-  if (action === 'incr') val += step; else val -= step;
-  if (input.type === 'number') {
-    if (input.min) val = Math.max(val, parseFloat(input.min));
-    if (input.max) val = Math.min(val, parseFloat(input.max));
-  }
-  // Ensure integer for reps
-  if (targetId.startsWith('reps-')) val = Math.max(1, Math.round(val));
-  input.value = val;
-}
-
 // Export button
 const exportBtn = document.getElementById('exportBtn');
 if (exportBtn) exportBtn.addEventListener('click', exportData);
@@ -774,11 +757,6 @@ if (timerPanel) {
   if (startBtn) startBtn.addEventListener('click', () => { if (timerRemaining <= 0) startTimer(1); });
   if (stopBtn) stopBtn.addEventListener('click', () => stopTimer());
 }
-
-// Global delegation for steppers
-document.addEventListener('click', (e) => {
-  if (e.target.closest('.step')) handleStepperClick(e);
-});
 
 // Close timer panel when clicking outside
 document.addEventListener('click', (e) => {

@@ -358,7 +358,7 @@ body {
 }
 
 .form-row.three {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 0.9fr 1fr 1fr;
 }
 
 .form-group {
@@ -369,6 +369,11 @@ body {
 
 .form-group.full {
   grid-column: 1 / -1;
+}
+
+.form-group.checkbox-group {
+  justify-content: flex-end;
+  align-items: center;
 }
 
 label {
@@ -391,38 +396,71 @@ textarea {
   color: var(--text-primary);
   font-family: var(--font);
   font-size: 0.9rem;
-  padding: 9px 12px;
+  padding: 8px 10px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   -webkit-appearance: none;
   appearance: none;
 }
 
-.input-stepper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+input[type="date"] {
+  padding: 8px 10px;
 }
 
-.input-stepper .step {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text-secondary);
-  font-weight: 700;
+.timer-options button { flex: 1; padding: 10px 12px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-weight: 700; }
+.timer-options button:hover { background: rgba(255,255,255,0.06); border-color: var(--border-accent); }
+.timer-display { text-align: center; font-weight: 800; color: var(--accent-light); }
+.timer-controls { display:flex; gap:6px; }
+.timer-controls button { flex:1; padding:10px 12px; border-radius:12px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); cursor:pointer; font-weight: 700; }
+.timer-controls button:hover { background: rgba(255,255,255,0.06); border-color: var(--border-accent); }
+
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 4px;
+  background: #000;
+  border: 1.5px solid var(--accent);
+}
+
+.checkbox-row input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox-row span {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .btn-repeat-last {
   margin-top: 6px;
-  padding: 8px 10px;
-  background: transparent;
-  border: 1px dashed var(--border-accent);
-  color: var(--text-secondary);
-  border-radius: 10px;
+  padding: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
   cursor: pointer;
+}
+
+.btn-repeat-last:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border-accent);
 }
 
 .timer-fab {
@@ -459,10 +497,12 @@ textarea {
 .timer-panel[aria-hidden="false"] { display: flex; }
 
 .timer-options { display: flex; gap: 6px; }
-.timer-options button { flex: 1; padding: 6px 8px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+.timer-options button { flex: 1; padding: 8px 10px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; font-weight: 700; }
+.timer-options button:hover { background: rgba(255,255,255,0.06); border-color: var(--border-accent); }
 .timer-display { text-align: center; font-weight: 800; color: var(--accent-light); }
 .timer-controls { display:flex; gap:6px; }
-.timer-controls button { flex:1; padding:6px; border-radius:8px; border: none; cursor:pointer; }
+.timer-controls button { flex:1; padding:8px 10px; border-radius:12px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); cursor:pointer; font-weight: 700; }
+.timer-controls button:hover { background: rgba(255,255,255,0.06); border-color: var(--border-accent); }
 
 
 input[type="date"]:focus,
@@ -495,10 +535,14 @@ select.diff-medium { border-color: rgba(255,190,50,0.35); }
 select.diff-hard   { border-color: rgba(255,80,80,0.35); }
 
 .checkbox-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
 }
 
 .checkbox-row input[type="checkbox"] {
